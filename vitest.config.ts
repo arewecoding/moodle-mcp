@@ -10,7 +10,7 @@ export default defineConfig({
       main: "./src/index.ts",
       miniflare: {
         compatibilityDate: "2025-10-01",
-        compatibilityFlags: ["nodejs_compat"],
+        compatibilityFlags: ["nodejs_compat", "global_fetch_strictly_public"],
         kvNamespaces: ["OAUTH_KV"],
         bindings: {
           MOODLE_BASE_URL: "https://moodle.example.test",
