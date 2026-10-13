@@ -1,0 +1,30 @@
+{
+  // Cloudflare Workers config for the read-only Moodle MCP server.
+  // Secrets (set with `wrangler secret put`): MOODLE_TOKEN, GOOGLE_CLIENT_ID,
+  // GOOGLE_CLIENT_SECRET, ALLOWED_GOOGLE_SUB, COOKIE_ENCRYPTION_KEY, LINK_SIGNING_KEYS.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "moodle-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "MOODLE_BASE_URL": "https://your-moodle.example.com",
+    // Comma-separated allowlist of OAuth client redirect URIs. Claude's callback
+    // ships on day one; Gemini's is appended after U6 logs it.
+    "ALLOWED_REDIRECT_URIS": "https://claude.ai/api/mcp/auth_callback",
+    // "on" logs (but still rejects) unknown redirect URIs during the first Gemini connect.
+    "GEMINI_REDIRECT_DISCOVERY": "off",
+    // Inline file size cap in bytes (default 10 MB); set from U6 per-client measurement.
+    "INLINE_FILE_CAP_BYTES": "10485760"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+      // Replace with a real namespace id via `wrangler kv namespace create OAUTH_KV`.
+      "id": "REPLACE_WITH_OAUTH_KV_NAMESPACE_ID"
+    }
+  ]
+}

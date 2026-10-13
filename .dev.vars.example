@@ -1,0 +1,23 @@
+# Copy to .dev.vars for local `wrangler dev`, or set each with `wrangler secret put <NAME>`
+# for production. .dev.vars is gitignored. Never commit real values.
+
+# Moodle Mobile web service token (can perform writes; kept server-side only).
+MOODLE_TOKEN="paste-your-moodle-mobile-token"
+
+# Google OAuth 2.0 Web application client (console.cloud.google.com).
+# Authorized redirect URI must be https://<your-worker-host>/callback
+GOOGLE_CLIENT_ID="xxxxxxxx.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="paste-your-google-client-secret"
+
+# The single Google account allowed to use this server: the `sub` claim from its
+# ID token (a stable numeric string, NOT your email). See README for how to find it.
+ALLOWED_GOOGLE_SUB="your-google-numeric-subject-id"
+
+# Random 32+ byte secret used to encrypt the sign-in state cookie.
+# Generate: openssl rand -base64 32
+COOKIE_ENCRYPTION_KEY="generate-a-random-32-byte-base64-secret"
+
+# HMAC signing keys for file links, as kid:base64url-secret pairs, newest first.
+# The first entry signs new links; older entries still verify (overlap for rotation).
+# Generate a secret: openssl rand -base64url 32
+LINK_SIGNING_KEYS="k1:generate-a-random-base64url-secret"
