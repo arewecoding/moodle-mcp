@@ -1,14 +1,15 @@
-# Moodle your site — Remote MCP Server
+# Moodle Remote MCP Server
 
 A read-only [MCP](https://modelcontextprotocol.io) server on Cloudflare Workers
-that exposes **your** your institution Moodle account to Gemini and
-Claude, from phone or web. It serves courses, deadlines, announcements, Moodle
-messages, forums, grades, and course files. It never writes to Moodle, and your
-Moodle token never leaves the server.
+that exposes **your own** Moodle account to Gemini and Claude, from phone or web.
+It serves courses, deadlines, announcements, Moodle messages, forums, grades, and
+course files. It never writes to Moodle, and your Moodle token never leaves the
+server.
 
-Sign-in is Google, restricted to a single account (yours). Moodle-hosted files
-are delivered both inline (so the model can read them) and as a short-lived
-signed link.
+It is site-agnostic: point `MOODLE_BASE_URL` at any Moodle instance and the REST
+endpoint and file paths are derived from it. Sign-in is Google, restricted to a
+single account (yours). Moodle-hosted files are delivered both inline (so the
+model can read them) and as a short-lived signed link.
 
 > **Status:** Units U1–U5 are implemented and tested (61 tests passing). U6 is
 > the manual deploy-and-connect checkpoint below. U7–U9 (remaining tools,

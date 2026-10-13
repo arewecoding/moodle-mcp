@@ -34,7 +34,7 @@ function getProvider(env: Env, origin: string): OAuthProvider<Env> {
       // the user enters in the connector. Derived from the first request origin.
       resourceMetadata: {
         resource: `${origin}/mcp`,
-        resource_name: "Moodle your site",
+        resource_name: "Moodle MCP",
       },
     });
   }

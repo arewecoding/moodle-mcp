@@ -94,11 +94,11 @@ describe("error isolation (R17)", () => {
       if (req.body.includes("core_course_get_contents")) {
         return moodleJson({ exception: "x", errorcode: "accessexception", message: "no" });
       }
-      return moodleJson({ fullname: "Test User", username: "tu", userid: 101, sitename: "your site" });
+      return moodleJson({ fullname: "Test User", username: "tu", userid: 101, sitename: "Example University" });
     });
     const blocked = await rpc("tools/call", { name: "get_course_contents", arguments: { course_id: 1 } });
     expect(isError(blocked.json)).toBe(true);
-    expect(JSON.stringify(toolData(blocked.json))).toMatch(/not enabled on your site/);
+    expect(JSON.stringify(toolData(blocked.json))).toMatch(/not enabled on this Moodle/);
 
     const ok = await rpc("tools/call", { name: "get_my_info", arguments: {} });
     expect(isError(ok.json)).toBe(false);

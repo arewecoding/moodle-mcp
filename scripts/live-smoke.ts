@@ -1,21 +1,26 @@
 /**
- * Live smoke check for your site's Moodle. Run this yourself, locally, with your own
- * token — it never runs in CI and never touches the deployed Worker. It probes
- * which read-only functions your site actually allows, so you can fill the
- * working/blocked table in the README (U6).
+ * Live smoke check for your Moodle site. Run this yourself, locally, with your
+ * own token — it never runs in CI and never touches the deployed Worker. It
+ * probes which read-only functions your site actually allows, so you can fill
+ * the working/blocked table in the README (U6).
  *
  * Usage (PowerShell):
+ *   $env:MOODLE_BASE_URL = "https://your-moodle.example.com"
  *   $env:MOODLE_TOKEN = "<your token>"
  *   npm run smoke
  *
  * It prints only function names and status. It never prints the token.
  */
 
-const BASE = (process.env["MOODLE_BASE_URL"] ?? "https://your-moodle.example.com").replace(/\/+$/, "");
+const BASE = (process.env["MOODLE_BASE_URL"] ?? "").replace(/\/+$/, "");
 const TOKEN = process.env["MOODLE_TOKEN"] ?? "";
 
 if (!TOKEN) {
   console.error("MOODLE_TOKEN is not set. Set it in this shell and re-run (see the script header).");
+  process.exit(1);
+}
+if (!BASE) {
+  console.error("MOODLE_BASE_URL is not set. Set it to your Moodle site's https:// URL and re-run.");
   process.exit(1);
 }
 if (!/^https:\/\//i.test(BASE)) {
@@ -62,7 +67,7 @@ async function main(): Promise<void> {
 
   const siteOk = await probe("core_webservice_get_site_info", () => call("core_webservice_get_site_info"));
   let userid = "";
-  let sampleCourse = "1127";
+  let sampleCourse = "2";
   if (siteOk) {
     const info = (await call("core_webservice_get_site_info")) as { fullname?: string; userid?: number };
     console.log(`  connected as: ${info.fullname ?? "?"}`);

@@ -11,6 +11,8 @@
     "enabled": true
   },
   "vars": {
+    // Your Moodle site's base URL (https only). The REST endpoint and
+    // pluginfile paths are derived from it in code; nothing else is hardcoded.
     "MOODLE_BASE_URL": "https://your-moodle.example.com",
     // Comma-separated allowlist of OAuth client redirect URIs. Claude's callback
     // ships on day one; Gemini's is appended after U6 logs it.

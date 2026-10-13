@@ -1,8 +1,8 @@
-"""Read-only MCP server for Moodle (your institution).
+"""Read-only MCP server for Moodle (local stdio reference implementation).
 
 Config (environment only):
   MOODLE_TOKEN     required. Moodle Mobile web service token.
-  MOODLE_BASE_URL  optional, default https://your-moodle.example.com. Must be https://.
+  MOODLE_BASE_URL  optional, your site, e.g. https://your-moodle.example.com. Must be https://.
 
 Runs over stdio. Never logs or returns the token.
 """
@@ -184,7 +184,7 @@ class MoodleClient:
                     "reset the old key under Preferences > Security keys, then restart the MCP client."
                 )
             if code in BLOCKED_ERRORCODES or "access control exception" in message.lower():
-                raise BlockedFunctionError(f"This function is not enabled on your site's Moodle: {wsfunction}")
+                raise BlockedFunctionError(f"This function is not enabled on this Moodle site: {wsfunction}")
             raise MoodleError(f"Moodle error in {wsfunction} ({code or 'unknown'}): {message}")
         return payload
 

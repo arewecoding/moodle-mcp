@@ -26,7 +26,7 @@ export class InvalidTokenError extends MoodleError {
 /** Function is not enabled on this Moodle site (access/permission/availability). */
 export class BlockedFunctionError extends MoodleError {
   constructor(wsfunction: string) {
-    super(`This function is not enabled on your site's Moodle: ${wsfunction}`, wsfunction);
+    super(`This function is not enabled on this Moodle site: ${wsfunction}`, wsfunction);
     this.name = "BlockedFunctionError";
   }
 }
