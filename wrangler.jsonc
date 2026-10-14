@@ -11,9 +11,8 @@
     "enabled": true
   },
   "vars": {
-    // Your Moodle site's base URL (https only). The REST endpoint and
-    // pluginfile paths are derived from it in code; nothing else is hardcoded.
-    "MOODLE_BASE_URL": "https://your-moodle.example.com",
+    // MOODLE_BASE_URL (your site's https:// URL) is set as a secret, not here,
+    // so no institution-specific value lands in the repo. See the README.
     // Comma-separated allowlist of OAuth client redirect URIs. Claude's callback
     // ships on day one; Gemini's is appended after U6 logs it.
     "ALLOWED_REDIRECT_URIS": "https://claude.ai/api/mcp/auth_callback",

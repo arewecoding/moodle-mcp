@@ -1,6 +1,10 @@
 # Copy to .dev.vars for local `wrangler dev`, or set each with `wrangler secret put <NAME>`
 # for production. .dev.vars is gitignored. Never commit real values.
 
+# Your Moodle site's base URL (https only). Kept as a secret so no
+# institution-specific value lands in the repo.
+MOODLE_BASE_URL="https://your-moodle.example.com"
+
 # Moodle Mobile web service token (can perform writes; kept server-side only).
 MOODLE_TOKEN="paste-your-moodle-mobile-token"
 
