@@ -28,5 +28,17 @@
       // Replace with a real namespace id via `wrangler kv namespace create OAUTH_KV`.
       "id": "REPLACE_WITH_OAUTH_KV_NAMESPACE_ID"
     }
-  ]
+  ],
+  // Workers Rate Limiting (U9): ~60 requests per 60s per key (per user for tool
+  // calls, per IP for the auth endpoints). namespace_id is any stable integer.
+  "unsafe": {
+    "bindings": [
+      {
+        "name": "RATE_LIMITER",
+        "type": "ratelimit",
+        "namespace_id": "1001",
+        "simple": { "limit": 60, "period": 60 }
+      }
+    ]
+  }
 }

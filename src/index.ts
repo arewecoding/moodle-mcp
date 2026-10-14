@@ -3,6 +3,7 @@ import type { Env } from "./types.js";
 import { googleApp } from "./auth/google-handler.js";
 import { makeClientRegistrationCallback } from "./auth/client-policy.js";
 import { isKilled, killedResponse } from "./ops/killswitch.js";
+import { withinRateLimit } from "./ops/ratelimit.js";
 import { mcpApiHandler } from "./mcp/server.js";
 
 /**
@@ -45,6 +46,17 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     // Kill switch (KTD9) wraps every route, including /mcp, /authorize, /files.
     if (await isKilled(env)) return killedResponse();
+
+    // Per-IP rate limit on the open auth endpoints so an unauthenticated caller
+    // cannot exhaust KV writes by scripting registrations (U9).
+    const path = new URL(request.url).pathname;
+    if (path === "/register" || path === "/authorize") {
+      const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
+      if (!(await withinRateLimit(env.RATE_LIMITER, `auth:${ip}`))) {
+        return new Response("Too Many Requests", { status: 429 });
+      }
+    }
+
     const origin = new URL(request.url).origin;
     return getProvider(env, origin).fetch(request, env, ctx);
   },

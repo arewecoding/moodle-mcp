@@ -1,4 +1,5 @@
 import type { OAuthHelpers } from "@cloudflare/workers-oauth-provider";
+import type { RateLimiter } from "./ops/ratelimit.js";
 
 /** Worker environment: vars from wrangler.jsonc plus secrets and bindings. */
 export interface Env {
@@ -6,6 +7,8 @@ export interface Env {
   OAUTH_KV: KVNamespace;
   /** Injected by OAuthProvider into the default/API handler env. */
   OAUTH_PROVIDER: OAuthHelpers;
+  /** Optional Workers Rate Limiting binding (U9); absent in tests. */
+  RATE_LIMITER?: RateLimiter;
 
   // Vars (wrangler.jsonc)
   MOODLE_BASE_URL: string;

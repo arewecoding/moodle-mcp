@@ -2,6 +2,7 @@ import type { Env, UserProps } from "../types.js";
 import { MoodleClient } from "../moodle/client.js";
 import { MoodleError } from "../moodle/errors.js";
 import { log } from "../ops/log.js";
+import { withinRateLimit } from "../ops/ratelimit.js";
 import { READONLY_ANNOTATIONS, type ToolContext, type ToolDef } from "./tools/registry.js";
 import { profileTools, ToolInputError } from "./tools/profile.js";
 import { contentsTools } from "./tools/contents.js";
@@ -127,6 +128,11 @@ async function callTool(
   const args = (params?.["arguments"] as Record<string, unknown>) ?? {};
   const tool = TOOL_BY_NAME.get(name);
   if (!tool) return rpcError(id, -32602, `Unknown tool: ${name}`);
+
+  if (!(await withinRateLimit(env.RATE_LIMITER, `tool:${props.googleSub}`))) {
+    log({ event: "tool.ratelimited", tool: name });
+    return result(id, toolResult({ error: "Rate limit exceeded; please slow down and retry shortly." }, true));
+  }
 
   const moodle = new MoodleClient(env.MOODLE_BASE_URL, env.MOODLE_TOKEN);
   const toolCtx: ToolContext = { env, props, moodle, request };

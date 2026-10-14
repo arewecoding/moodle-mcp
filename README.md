@@ -11,13 +11,13 @@ endpoint and file paths are derived from it. Sign-in is Google, restricted to a
 single account (yours). Moodle-hosted files are delivered both inline (so the
 model can read them) and as a short-lived signed link.
 
-> **Status:** Units U1–U5 are implemented and tested (61 tests passing). U6 is
-> the manual deploy-and-connect checkpoint below. U7–U9 (remaining tools,
-> hardening) come after U6, informed by what it finds.
+> **Status:** fully implemented and tested (80 tests passing). The one remaining
+> step is yours: the U6 deploy-and-connect checkpoint below, which takes it live
+> and confirms which Moodle functions your site allows.
 
 ---
 
-## What works today (after U6)
+## Tools
 
 | Tool | What it does |
 |---|---|
@@ -25,8 +25,15 @@ model can read them) and as a short-lived signed link.
 | `list_courses` | Enrolled courses (all / inprogress / future / past) |
 | `get_course_contents` | A course's sections, activities, and file references |
 | `get_file` | Read a Moodle-hosted file (text inline, PDF/image as attachment, large → link) |
+| `get_upcoming_deadlines` | Deadlines and calendar events across courses (activities + exams) |
+| `get_recent_announcements` | News-forum posts across in-progress courses — find cancellations here |
+| `get_messages` | Your recent Moodle direct-message conversations (read-only) |
+| `list_forums` / `get_forum_discussions` / `get_discussion_posts` | Browse forums and read posts, with attachments as readable refs |
+| `get_grades` | Your grade items for a course |
+| `get_references` | A course's external links (web / Drive / YouTube / PDF) and book citations |
 
-Deadlines, announcements, messages, forums, and grades arrive in U7–U8.
+Every tool is read-only. Files attached to posts and files linked inside course
+text are delivered through the same signed `get_file` references as course files.
 
 ---
 
@@ -196,13 +203,17 @@ Moodle mobile launch method or `/login/token.php?service=moodle_mobile_app`,
   anything an agent opens is data, not instructions. The server labels it, but
   an agent with Gmail/Calendar actions could still be steered by a hostile post.
   Treat that as a residual risk.
+- **Rate limiting:** a Workers Rate Limiting binding caps requests per user
+  (tool calls) and per IP (the open `/register` and `/authorize` endpoints), so
+  one caller can't exhaust KV or hammer your Moodle site. It fails open if the
+  binding is unavailable, so it never breaks normal use.
 
 ---
 
 ## Development
 
 ```powershell
-npm test            # 61 tests, in the Workers runtime, no live Moodle
+npm test            # 80 tests, in the Workers runtime, no live Moodle
 npm run typecheck
 npm run deploy:dry  # bundle without deploying
 npm run dev         # local wrangler dev (needs .dev.vars)
