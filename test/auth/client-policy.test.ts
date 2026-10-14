@@ -21,8 +21,36 @@ describe("redirect allowlist", () => {
     expect(rejectRedirect(E, "https://evil.example/cb")).toMatch(/allowlist/);
   });
 
+  it("allows a redirect added via EXTRA_REDIRECT_URIS (secret) and still rejects others", () => {
+    const gemini = "https://oauth-redirect.googleusercontent.com/r/user_bound_custom-mcp-123-moodle";
+    const withExtra = { ...E, EXTRA_REDIRECT_URIS: gemini } as Env;
+    expect(isAllowedRedirect(withExtra, gemini)).toBe(true);
+    expect(isAllowedRedirect(withExtra, CLAUDE)).toBe(true); // committed default still works
+    expect(isAllowedRedirect(withExtra, "https://evil.example/cb")).toBe(false);
+  });
+
   it("rejects a missing redirect URI", () => {
     expect(rejectRedirect(E, undefined)).toMatch(/missing/);
+  });
+
+  it("allows all of Gemini's user-bound redirects for this owner's sub, rejects other subs/hosts", () => {
+    // Test env ALLOWED_GOOGLE_SUB = 1234567890. Gemini sends 3 hosts x 2 prefixes.
+    const hosts = [
+      "oauth-redirect.googleusercontent.com",
+      "oauth-redirect-sandbox.googleusercontent.com",
+      "oauth-redirect-test.googleusercontent.com",
+    ];
+    for (const h of hosts) {
+      for (const p of ["r", "a"]) {
+        expect(isAllowedRedirect(E, `https://${h}/${p}/user_bound_custom-mcp-1234567890-moodle_x`)).toBe(true);
+      }
+    }
+    // Another account's sub is rejected on every host/prefix.
+    expect(isAllowedRedirect(E, "https://oauth-redirect.googleusercontent.com/a/user_bound_custom-mcp-9999999999-x")).toBe(false);
+    // A look-alike host is rejected.
+    expect(isAllowedRedirect(E, "https://evil.googleusercontent.com/r/user_bound_custom-mcp-1234567890-x")).toBe(false);
+    // A different path shape is rejected.
+    expect(isAllowedRedirect(E, "https://oauth-redirect.googleusercontent.com/x/user_bound_custom-mcp-1234567890-x")).toBe(false);
   });
 
   it("rejects an unknown redirect even while discovery is on (log-and-reject)", () => {

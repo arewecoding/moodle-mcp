@@ -124,17 +124,16 @@ Google when prompted. Ask: *"list my courses"*, then *"show contents of course
 
 ### Connect Gemini
 
-Gemini → Connectors → **+ Custom** → **Connect to an MCP server** → `<url>/mcp`.
-Before this first Gemini connect, turn discovery on so its callback is logged:
+Gemini (personal account, web) → Connectors → **+ Custom** → **Connect to an MCP
+server** → enter `<url>/mcp`, leave Client ID / secret **blank**, **Next**, and
+sign in with Google. It connects via automatic registration — no extra steps.
 
-```powershell
-npx wrangler deploy --var GEMINI_REDIRECT_DISCOVERY:on   # or edit wrangler.jsonc
-```
-
-Attempt the connect; it is rejected the first time. Read Gemini's redirect URI
-from the logs (`npx wrangler tail`), add it to `ALLOWED_REDIRECT_URIS` in
-`wrangler.jsonc`, set `GEMINI_REDIRECT_DISCOVERY` back to `off`, redeploy, and
-connect again.
+Gemini registers several *user-bound* redirect URIs on Google's OAuth-redirect
+hosts (prod/sandbox/test, `/r/` and `/a/` paths), each carrying your Google
+`sub`. The server recognises these by pattern and admits only the ones carrying
+`ALLOWED_GOOGLE_SUB`, so Gemini works out of the box while another account's
+Gemini is still refused. (`GEMINI_REDIRECT_DISCOVERY` and `EXTRA_REDIRECT_URIS`
+remain for adding any other client's exact callback, but Gemini needs neither.)
 
 ### Record results
 

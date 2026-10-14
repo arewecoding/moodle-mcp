@@ -13,6 +13,9 @@ export interface Env {
   // Vars (wrangler.jsonc)
   MOODLE_BASE_URL: string;
   ALLOWED_REDIRECT_URIS: string;
+  /** Optional secret: extra allowlisted redirect URIs (e.g. Gemini's account-
+   *  specific callback), comma-separated, merged with ALLOWED_REDIRECT_URIS. */
+  EXTRA_REDIRECT_URIS?: string;
   GEMINI_REDIRECT_DISCOVERY: string;
   INLINE_FILE_CAP_BYTES: string;
 
