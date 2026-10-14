@@ -159,7 +159,27 @@ googleApp.get("/callback", async (c) => {
   if (claims["email_verified"] !== true) return c.text("Email not verified.", 403);
 
   const sub = String(claims["sub"] ?? "");
-  if (!sub || sub !== env.ALLOWED_GOOGLE_SUB) {
+
+  // Setup bootstrap: until ALLOWED_GOOGLE_SUB is configured, show the signed-in
+  // account's subject id instead of completing auth, so the owner can read it,
+  // set the secret, and redeploy. Once configured, this path never runs.
+  const configured = (env.ALLOWED_GOOGLE_SUB ?? "").trim();
+  if (!configured || configured === "your-google-numeric-subject-id") {
+    const safeSub = sub.replace(/[^0-9]/g, "");
+    return c.html(
+      `<!doctype html><meta charset="utf-8"><title>Setup</title>` +
+        `<body style="font-family:system-ui;max-width:40rem;margin:3rem auto;padding:0 1rem">` +
+        `<h2>Almost there — one setting left</h2>` +
+        `<p>Your Google subject id (this account) is:</p>` +
+        `<pre style="background:#f3f3f3;padding:1rem;font-size:1.2rem">${safeSub}</pre>` +
+        `<p>Set it as the <code>ALLOWED_GOOGLE_SUB</code> secret and redeploy, then reconnect:</p>` +
+        `<pre style="background:#f3f3f3;padding:1rem">echo ${safeSub} | npx wrangler secret put ALLOWED_GOOGLE_SUB\nnpx wrangler deploy</pre>` +
+        `<p>Only this account will be admitted afterward.</p></body>`,
+      200,
+    );
+  }
+
+  if (!sub || sub !== configured) {
     log({ event: "google.sub.denied" });
     return c.text("This Google account is not permitted to use this connector.", 403);
   }

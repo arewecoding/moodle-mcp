@@ -69,9 +69,12 @@ Copy the printed `id` into `wrangler.jsonc` (replace `REPLACE_WITH_OAUTH_KV_NAME
 
 ### 3. Find your Google `sub` (the allowed account id)
 
-Your `sub` is a stable numeric id, not your email. Easiest way: after the first
-sign-in attempt, the server logs a denied `sub` — or decode an ID token at
-<https://jwt.io> and read the `sub` claim. Set it as `ALLOWED_GOOGLE_SUB`.
+Your `sub` is a stable numeric id, not your email. You don't need it up front:
+deploy with `ALLOWED_GOOGLE_SUB` left unset, then open `https://<worker-host>/authorize`
+(or just start the connector sign-in) and sign in with Google. While the server
+is unconfigured it shows your `sub` on a setup page instead of denying you. Set
+that value as `ALLOWED_GOOGLE_SUB` and redeploy — only that account is admitted
+afterward.
 
 ### 4. Set the secrets
 
