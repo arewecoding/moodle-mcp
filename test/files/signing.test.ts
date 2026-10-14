@@ -10,10 +10,25 @@ describe("file ref signing", () => {
     const token = await signFileRef(E, { k: "cm", c: 1127, m: 45, i: 0 });
     const v = await verifyFileRef(E, token);
     expect(v.ok).toBe(true);
-    if (v.ok) {
+    if (v.ok && v.ref.k === "cm") {
       expect(v.ref.c).toBe(1127);
       expect(v.ref.m).toBe(45);
       expect(v.ref.i).toBe(0);
+    } else {
+      throw new Error("expected a cm ref");
+    }
+  });
+
+  it("signs and verifies a forum-attachment ref", async () => {
+    const token = await signFileRef(E, { k: "fa", d: 50, p: 99, i: 1 });
+    const v = await verifyFileRef(E, token);
+    expect(v.ok).toBe(true);
+    if (v.ok && v.ref.k === "fa") {
+      expect(v.ref.d).toBe(50);
+      expect(v.ref.p).toBe(99);
+      expect(v.ref.i).toBe(1);
+    } else {
+      throw new Error("expected an fa ref");
     }
   });
 

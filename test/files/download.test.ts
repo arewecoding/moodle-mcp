@@ -109,6 +109,29 @@ describe("handleDownload", () => {
     expect([403, 410]).toContain(resp.status);
   });
 
+  it("streams a forum-attachment (fa) ref by re-resolving the post", async () => {
+    const attUrl = `${BASE}/webservice/pluginfile.php/1/mod_forum/attachment/99/notice.pdf`;
+    stub = stubFetch((req) => {
+      if (req.url.includes("/webservice/rest/server.php") && req.body.includes("get_discussion_posts")) {
+        return moodleJson({
+          posts: [
+            { id: 99, attachments: [{ type: "file", filename: "notice.pdf", fileurl: attUrl, filesize: 100, mimetype: "application/pdf" }] },
+          ],
+        });
+      }
+      if (req.url.includes("/pluginfile.php/")) {
+        return new Response("ATTACHMENT", { status: 200, headers: { "content-type": "application/pdf" } });
+      }
+      return new Response("unexpected", { status: 500 });
+    });
+    const token = await signFileRef(E, { k: "fa", d: 50, p: 99, i: 0 });
+    const resp = await handleDownload(E, token);
+    expect(resp.status).toBe(200);
+    expect(await resp.text()).toBe("ATTACHMENT");
+    const pluginReq = stub.calls.find((c) => c.url.includes("/pluginfile.php/"));
+    expect(pluginReq!.url).toContain("token=test-moodle-token");
+  });
+
   it("rejects a ref whose resolved file is not Moodle-hosted (token never sent elsewhere)", async () => {
     // Course contents lists only an external file for module 45, so index 0 of
     // hosted files does not exist -> 404, and no pluginfile fetch happens.

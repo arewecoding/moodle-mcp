@@ -9,8 +9,8 @@ import type { Env } from "../types.js";
  * of the download link.
  */
 
-/** A reference to one course-module file. (Future kinds, e.g. post attachments, add fields.) */
-export interface FileRef {
+/** A reference to one course-module file. */
+export interface CourseModuleRef {
   /** kind: "cm" = course-module file. */
   k: "cm";
   /** course id */
@@ -23,6 +23,34 @@ export interface FileRef {
   e: number;
   /** signing key id */
   kid: string;
+}
+
+/** A reference to one attachment on a forum/announcement post. */
+export interface ForumAttachmentRef {
+  /** kind: "fa" = forum post attachment. */
+  k: "fa";
+  /** discussion id */
+  d: number;
+  /** post id */
+  p: number;
+  /** index into that post's attachment list */
+  i: number;
+  /** expiry, unix seconds */
+  e: number;
+  /** signing key id */
+  kid: string;
+}
+
+export type FileRef = CourseModuleRef | ForumAttachmentRef;
+
+function hasValidShape(ref: FileRef): boolean {
+  if (ref.k === "cm") {
+    return typeof ref.c === "number" && typeof ref.m === "number" && typeof ref.i === "number";
+  }
+  if (ref.k === "fa") {
+    return typeof ref.d === "number" && typeof ref.p === "number" && typeof ref.i === "number";
+  }
+  return false;
 }
 
 const LINK_TTL_SECONDS = 15 * 60;
@@ -75,16 +103,21 @@ function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
   return diff === 0;
 }
 
-/** Sign a reference for a course-module file with the newest key; returns the token. */
+/** The caller-supplied part of a reference (expiry and key id are added here). */
+export type FileRefInput =
+  | Omit<CourseModuleRef, "e" | "kid">
+  | Omit<ForumAttachmentRef, "e" | "kid">;
+
+/** Sign a file reference with the newest key; returns the token. */
 export async function signFileRef(
   env: Env,
-  ref: Omit<FileRef, "e" | "kid">,
+  ref: FileRefInput,
   now: number = Math.floor(Date.now() / 1000),
 ): Promise<string> {
   const keys = parseKeys(env);
   const key = keys[0];
   if (!key) throw new Error("No LINK_SIGNING_KEYS configured.");
-  const full: FileRef = { ...ref, e: now + LINK_TTL_SECONDS, kid: key.kid };
+  const full = { ...ref, e: now + LINK_TTL_SECONDS, kid: key.kid } as FileRef;
   const payload = b64urlEncode(new TextEncoder().encode(JSON.stringify(full)));
   const sig = b64urlEncode(await hmac(key.secret, payload));
   return `${payload}.${sig}`;
@@ -111,7 +144,7 @@ export async function verifyFileRef(
   } catch {
     return { ok: false, reason: "malformed" };
   }
-  if (ref.k !== "cm" || typeof ref.c !== "number" || typeof ref.m !== "number" || typeof ref.i !== "number") {
+  if (!ref || (ref.k !== "cm" && ref.k !== "fa") || !hasValidShape(ref)) {
     return { ok: false, reason: "malformed" };
   }
 

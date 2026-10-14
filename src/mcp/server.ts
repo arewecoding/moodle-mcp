@@ -6,12 +6,28 @@ import { READONLY_ANNOTATIONS, type ToolContext, type ToolDef } from "./tools/re
 import { profileTools, ToolInputError } from "./tools/profile.js";
 import { contentsTools } from "./tools/contents.js";
 import { fileTools } from "./tools/files.js";
+import { deadlinesTools } from "./tools/deadlines.js";
+import { announcementsTools } from "./tools/announcements.js";
+import { messagesTools } from "./tools/messages.js";
+import { forumsTools } from "./tools/forums.js";
+import { gradesTools } from "./tools/grades.js";
+import { referencesTools } from "./tools/references.js";
 
 const SERVER_INFO = { name: "moodle-mcp", version: "1.0.0" };
 const DEFAULT_PROTOCOL = "2025-06-18";
 
-/** The full read-only tool set. U7/U8 append their tools to these arrays. */
-const TOOLS: ToolDef[] = [...profileTools, ...contentsTools, ...fileTools];
+/** The full read-only tool set. */
+const TOOLS: ToolDef[] = [
+  ...profileTools,
+  ...contentsTools,
+  ...fileTools,
+  ...deadlinesTools,
+  ...announcementsTools,
+  ...messagesTools,
+  ...forumsTools,
+  ...gradesTools,
+  ...referencesTools,
+];
 const TOOL_BY_NAME = new Map(TOOLS.map((t) => [t.name, t]));
 
 interface JsonRpcRequest {

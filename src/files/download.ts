@@ -1,7 +1,7 @@
 import type { Env } from "../types.js";
 import { MoodleClient } from "../moodle/client.js";
 import { MoodleError } from "../moodle/errors.js";
-import { verifyFileRef, type FileRef } from "./signing.js";
+import { verifyFileRef, type FileRef, type CourseModuleRef, type ForumAttachmentRef } from "./signing.js";
 import { log } from "../ops/log.js";
 
 /** A Moodle contents entry (subset we use). */
@@ -67,12 +67,33 @@ export function hostedFilesOf(module: MoodleModule, baseUrl: string): MoodleFile
   );
 }
 
+interface ForumPost {
+  id: number;
+  attachments?: MoodleFileEntry[];
+  messageattachments?: MoodleFileEntry[];
+}
+
+function toResolved(entry: MoodleFileEntry): ResolvedFile {
+  return {
+    path: pluginfilePath(entry.fileurl as string),
+    filename: entry.filename ?? "file",
+    mimetype: entry.mimetype ?? "application/octet-stream",
+    filesize: entry.filesize ?? 0,
+  };
+}
+
 /**
- * Re-resolve a signed reference to the actual file by re-reading the course's
- * contents through the allowlisted client (no KV lookup). Throws if the file is
- * no longer listed or is not Moodle-hosted.
+ * Re-resolve a signed reference to the actual file by re-reading Moodle through
+ * the allowlisted client (no KV lookup). Throws if the file is no longer listed
+ * or is not Moodle-hosted. Branches on the reference kind: "cm" = course-module
+ * file, "fa" = an attachment on a forum/announcement post.
  */
 export async function resolveFileRef(moodle: MoodleClient, ref: FileRef): Promise<ResolvedFile> {
+  if (ref.k === "fa") return resolveForumAttachment(moodle, ref);
+  return resolveCourseModuleFile(moodle, ref);
+}
+
+async function resolveCourseModuleFile(moodle: MoodleClient, ref: CourseModuleRef): Promise<ResolvedFile> {
   const sections = await moodle.call<MoodleSection[]>("core_course_get_contents", {
     courseid: ref.c,
   });
@@ -82,15 +103,29 @@ export async function resolveFileRef(moodle: MoodleClient, ref: FileRef): Promis
     if (module) break;
   }
   if (!module) throw new MoodleError("Referenced file is no longer available.");
-  const files = hostedFilesOf(module, moodle.baseUrl);
-  const entry = files[ref.i];
+  const entry = hostedFilesOf(module, moodle.baseUrl)[ref.i];
   if (!entry || !entry.fileurl) throw new MoodleError("Referenced file is no longer available.");
-  return {
-    path: pluginfilePath(entry.fileurl),
-    filename: entry.filename ?? "file",
-    mimetype: entry.mimetype ?? "application/octet-stream",
-    filesize: entry.filesize ?? 0,
-  };
+  return toResolved(entry);
+}
+
+async function resolveForumAttachment(moodle: MoodleClient, ref: ForumAttachmentRef): Promise<ResolvedFile> {
+  const data = await moodle.call<{ posts: ForumPost[] }>("mod_forum_get_discussion_posts", {
+    discussionid: ref.d,
+  });
+  const post = (data.posts ?? []).find((p) => p.id === ref.p);
+  if (!post) throw new MoodleError("Referenced file is no longer available.");
+  const entry = hostedAttachmentsOf(post, moodle.baseUrl)[ref.i];
+  if (!entry || !entry.fileurl) throw new MoodleError("Referenced file is no longer available.");
+  return toResolved(entry);
+}
+
+/** Moodle-hosted attachments on a forum post, in order. */
+export function hostedAttachmentsOf(
+  post: { attachments?: MoodleFileEntry[]; messageattachments?: MoodleFileEntry[] },
+  baseUrl: string,
+): MoodleFileEntry[] {
+  const all = [...(post.attachments ?? []), ...(post.messageattachments ?? [])];
+  return all.filter((e) => isMoodleHostedFile(e.fileurl, baseUrl));
 }
 
 const INLINE_TYPES = new Set(["application/pdf"]);
